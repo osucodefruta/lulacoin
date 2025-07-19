@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Mineração Online</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            flex-direction: column;
+        }
+        .game-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        #login-section, #game-section {
+            margin-top: 20px;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        #message {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        #mine-button {
+            background-color: #4CAF50; /* Green */
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #mine-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Jogo de Mineração Online</h1>
+
+    <div class="game-container">
+        <div id="login-section">
+            <h2>Login / Registrar</h2>
+            <input type="text" id="username" placeholder="Nome de Usuário">
+            <input type="password" id="password" placeholder="Senha">
+            <button onclick="login()">Login</button>
+            <button onclick="register()">Registrar</button>
+            <p id="message"></p>
+        </div>
+
+        <div id="game-section" style="display:none;">
+            <h2>Bem-vindo, <span id="display-username"></span>!</h2>
+            <p>Seu Saldo: <span id="balance">0</span> LulaCoins</p>
+            <button id="mine-button" onclick="mine()">Minar LulaCoin</button>
+            <button onclick="logout()">Sair</button>
+        </div>
+    </div>
+
+    <script>
+        // ATUALIZADO: URL do seu backend no Render
+        const BASE_URL = 'https://lula-coin-backend.onrender.com';
+
+        let token = null;
+        let currentUsername = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            token = localStorage.getItem('token');
+            currentUsername = localStorage.getItem('username');
+            if (token && currentUsername) {
+                showGameSection();
+            }
+        });
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const messageElement = document.getElementById('message');
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    token = data.token;
+                    currentUsername = username;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('username', currentUsername);
+                    messageElement.textContent = 'Login bem-sucedido!';
+                    showGameSection();
+                    getBalance();
+                } else {
+                    messageElement.textContent = data.message || 'Erro no login.';
+                }
+            } catch (error) {
+                console.error('Erro de rede:', error);
+                messageElement.textContent = 'Erro de conexão com o servidor.';
+            }
+        }
+
+        async function register() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const messageElement = document.getElementById('message');
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageElement.textContent = 'Usuário registrado com sucesso! Faça login.';
+                } else {
+                    messageElement.textContent = data.message || 'Erro ao registrar.';
+                }
+            } catch (error) {
+                console.error('Erro de rede:', error);
+                messageElement.textContent = 'Erro de conexão com o servidor.';
+            }
+        }
+
+        async function getBalance() {
+            try {
+                const response = await fetch(`${BASE_URL}/api/balance`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('balance').textContent = data.balance;
+                } else {
+                    console.error('Erro ao obter saldo:', data.message);
+                    if (response.status === 401) { // Unauthorized
+                        logout(); // Força o logout se o token for inválido/expirado
+                    }
+                }
+            } catch (error) {
+                console.error('Erro de rede ao obter saldo:', error);
+            }
+        }
+
+        async function mine() {
+            const mineButton = document.getElementById('mine-button');
+            mineButton.disabled = true; // Desabilita o botão para evitar cliques múltiplos
+
+            try {
+                const response = await fetch(`${BASE_URL}/api/mine`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('balance').textContent = data.newBalance;
+                } else {
+                    console.error('Erro ao minar:', data.message);
+                    if (response.status === 401) {
+                        logout();
+                    }
+                }
+            } catch (error) {
+                console.error('Erro de rede ao minar:', error);
+            } finally {
+                mineButton.disabled = false; // Reabilita o botão
+            }
+        }
+
+        function showGameSection() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('game-section').style.display = 'block';
+            document.getElementById('display-username').textContent = currentUsername;
+            getBalance();
+        }
+
+        function logout() {
+            token = null;
+            currentUsername = '';
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('game-section').style.display = 'none';
+            document.getElementById('message').textContent = 'Você foi desconectado.';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+    </script>
+</body>
+</html>
