@@ -1,776 +1,95 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lula Coin Miner</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <style>
-        /* Variáveis CSS para fácil tematização */
-        :root {
-            --primary-color: #ff3b3b; /* Vermelho Neon (ou ajuste para a cor que preferir) */
-            --secondary-color: #2e008a; /* Azul Escuro */
-            --tertiary-color: #0a0e2a; /* Azul Quase Preto */
-            --text-color: #e0e0e0;
-            --dark-gray: #1a1a1a;
-            --medium-gray: #333;
-            --light-gray: #555;
-            --red-alert: #ff4500;
-            --border-color: rgba(255, 59, 59, 0.3);
-            --glow-color: rgba(255, 59, 59, 0.6);
-
-            /* Cores para o ambiente do galpão */
-            --wall-color-light: #555;
-            --wall-color-dark: #333;
-            --floor-color: #222;
-            --ceiling-color: #444;
-        }
-
-        body {
-            font-family: 'Share Tech Mono', monospace;
-            background-color: var(--tertiary-color);
-            color: var(--text-color);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden; /* Esconde a barra de rolagem se houver */
-            position: relative;
-        }
-
-        /* Efeitos de iluminação ambiente */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle at center, rgba(46, 0, 138, 0.3) 0%, rgba(10, 14, 42, 0.8) 70%);
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .container {
-            background-color: var(--dark-gray);
-            border: 2px solid var(--border-color);
-            box-shadow: 0 0 20px var(--glow-color);
-            border-radius: 15px;
-            padding: 30px;
-            text-align: center;
-            width: 90%;
-            max-width: 500px;
-            position: relative;
-            z-index: 1;
-        }
-
-        h1, h2, h3 {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--primary-color);
-            text-shadow: 0 0 10px var(--primary-color);
-            margin-bottom: 20px;
-        }
-
-        input {
-            width: calc(100% - 20px);
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid var(--primary-color);
-            background-color: var(--medium-gray);
-            color: var(--text-color);
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: var(--tertiary-color);
-            padding: 12px 25px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
-            box-shadow: 0 0 10px rgba(255, 59, 59, 0.5);
-            margin: 5px;
-        }
-
-        button:hover {
-            background-color: #ff6b6b; /* Um tom mais claro de vermelho para o hover */
-            transform: translateY(-2px);
-            box-shadow: 0 0 15px rgba(255, 59, 59, 0.8);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            background-color: var(--light-gray);
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        .auth-mode-toggle {
-            margin-top: 20px;
-            font-size: 0.9rem;
-        }
-
-        .auth-mode-toggle a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: bold;
-            transition: color 0.3s ease;
-        }
-
-        .auth-mode-toggle a:hover {
-            color: #ff6b6b;
-            text-decoration: underline;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .error-message {
-            color: var(--red-alert);
-            margin-top: -10px;
-            margin-bottom: 15px;
-            font-size: 0.9rem;
-            min-height: 1.2rem; /* Garante espaço mesmo vazio */
-        }
-
-        .message-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .message-box {
-            background-color: var(--dark-gray);
-            border: 2px solid var(--primary-color);
-            border-radius: 10px;
-            padding: 25px;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 0 25px var(--glow-color);
-        }
-
-        .message-box p {
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-        }
-
-        /* --- Estilos do Jogo --- */
-        #game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px; /* Espaço entre os elementos */
-        }
-
-        .stat-box {
-            background-color: var(--medium-gray);
-            border: 1px solid var(--border-color);
-            padding: 15px 20px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-            flex-wrap: wrap; /* Permite quebrar linha em telas menores */
-            gap: 10px;
-        }
-
-        .stat-box div {
-            flex-grow: 1;
-            text-align: left;
-        }
-
-        .stat-box .value {
-            font-family: 'Orbitron', sans-serif;
-            color: var(--primary-color);
-            font-size: 1.8rem;
-            text-shadow: 0 0 8px var(--primary-color);
-            margin-left: 10px;
-            flex-shrink: 0; /* Evita que o valor encolha */
-        }
-
-        .stat-box .label {
-            font-size: 0.9rem;
-            color: var(--text-color);
-        }
-
-        .game-buttons {
-            display: flex;
-            flex-wrap: wrap; /* Permite quebrar linha */
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .miner-selection-bar {
-            position: fixed; /* Fixa a barra para que não role com o conteúdo */
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: var(--dark-gray);
-            border-top: 2px solid var(--primary-color);
-            padding: 20px;
-            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
-            z-index: 999; /* Garante que fique acima de outros elementos */
-            transform: translateY(100%); /* Começa escondida para baixo */
-            transition: transform 0.3s ease-out; /* Animação suave */
-        }
-
-        .miner-selection-bar.active {
-            transform: translateY(0); /* Desliza para cima quando ativa */
-        }
-
-        .miner-selection-bar h2 {
-            margin-top: 0;
-            text-align: center;
-        }
-
-        .miner-list {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .miner-item {
-            background-color: var(--medium-gray);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 15px;
-            width: 180px;
-            text-align: center;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .miner-item h3 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 1.2rem;
-        }
-
-        .miner-item p {
-            font-size: 0.9rem;
-            margin-bottom: 8px;
-        }
-
-        .miner-stats-display {
-            background-color: var(--medium-gray);
-            border: 1px solid var(--border-color);
-            padding: 15px;
-            border-radius: 10px;
-            width: 100%;
-            text-align: left;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-        }
-
-        .miner-stats-display p {
-            margin: 5px 0;
-            font-size: 0.95rem;
-        }
-
-        /* Barra de progresso */
-        .progress-bar-container {
-            width: 100%;
-            background-color: var(--medium-gray);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            height: 15px;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-
-        .progress-bar {
-            height: 100%;
-            width: 0%;
-            background-color: var(--primary-color);
-            transition: width 0.1s linear;
-        }
-
-        /* Notificação pequena */
-        .notification-overlay {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: var(--text-color);
-            padding: 10px 20px;
-            border-radius: 5px;
-            border: 1px solid var(--primary-color);
-            box-shadow: 0 0 15px var(--glow-color);
-            z-index: 1001;
-            font-size: 0.9rem;
-        }
-
-        /* Responsividade básica */
-        @media (max-width: 600px) {
-            .container {
-                padding: 20px;
-            }
-            h1 {
-                font-size: 1.8rem;
-            }
-            .stat-box .value {
-                font-size: 1.5rem;
-            }
-            button {
-                width: 100%;
-                margin: 5px 0;
-            }
-            .miner-list {
-                flex-direction: column;
-                align-items: center;
-            }
-            .miner-item {
-                width: 90%;
-                max-width: 250px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Jogo de Mineração Online</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      text-align: center;
+      margin-top: 100px;
+    }
+    .login-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      display: inline-block;
+      box-shadow: 0 0 10px #aaa;
+    }
+    input {
+      margin: 10px;
+      padding: 10px;
+      width: 200px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+    }
+    .error {
+      color: red;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div id="auth-screen">
-            <h2 id="auth-title">Login</h2>
-            <p id="auth-error" class="error-message hidden"></p>
-            <input type="text" id="auth-username" placeholder="Nome de Usuário" required>
-            <input type="password" id="auth-password" placeholder="Senha" required>
-            <button id="auth-submit-btn">Entrar</button>
-            <div class="auth-mode-toggle">
-                <span id="auth-mode-text">Não tem uma conta?</span> <a href="#" id="auth-mode-link">Registre-se aqui</a>
-            </div>
-        </div>
+  <div class="login-box">
+    <h2>Jogo de Mineração Online</h2>
+    <h3>Login / Registrar</h3>
+    <input id="email" placeholder="Usuário">
+    <input id="senha" type="password" placeholder="Senha">
+    <br>
+    <button onclick="login()">Login</button>
+    <button onclick="register()">Registrar</button>
+    <p id="erro" class="error"></p>
+  </div>
 
-        <div id="game-container" class="hidden">
-            <h1>Lula Coin Miner</h1>
-            <div class="stat-box">
-                <div>
-                    <div class="label">Usuário:</div>
-                    <div class="value" id="username-display"></div>
-                </div>
-                <div>
-                    <div class="label">LulaCoin:</div>
-                    <div class="value" id="lula-coin-display">0.00</div>
-                </div>
-            </div>
+  <script>
+    async function register() {
+      const username = document.getElementById('email').value;
+      const password = document.getElementById('senha').value;
 
-            <h2>Mineradores</h2>
-            <div id="miner-stats-display" class="miner-stats-display">
-                Nenhum minerador ainda. Compre um na loja!
-            </div>
-
-            <div class="progress-bar-container hidden">
-                <div id="progress-bar" class="progress-bar"></div>
-            </div>
-
-            <div class="game-buttons">
-                <button id="mine-btn"><i class="fas fa-hammer"></i> Minerar</button>
-                <button id="shop-btn"><i class="fas fa-store"></i> Loja</button>
-                <button id="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button>
-            </div>
-        </div>
-
-        <div id="miner-selection-bar" class="miner-selection-bar hidden">
-            <h2>Comprar Mineradores</h2>
-            <div id="miner-list" class="miner-list">
-                </div>
-            <button id="cancel-placement-btn">Voltar ao Jogo</button>
-        </div>
-
-        <div id="message-overlay" class="message-overlay hidden">
-            <div class="message-box">
-                <p id="message-text"></p>
-                <button id="message-btn">OK</button>
-            </div>
-        </div>
-
-        <div id="notification-overlay" class="notification-overlay hidden">
-            <span id="notification-text"></span>
-        </div>
-
-    </div>
-
-    <script>
-        // === CONFIGURAÇÃO DA URL DO SEU BACKEND ===
-        const BASE_URL = "https://lula-coin-backend.onrender.com";
-        // ===========================================
-
-        // Variáveis globais do DOM
-        const gameContainer = document.getElementById('game-container');
-        const authScreen = document.getElementById('auth-screen');
-        const authTitle = document.getElementById('auth-title');
-        const authUsernameInput = document.getElementById('auth-username');
-        const authPasswordInput = document.getElementById('auth-password');
-        const authSubmitBtn = document.getElementById('auth-submit-btn');
-        const authModeText = document.getElementById('auth-mode-text');
-        const authModeLink = document.getElementById('auth-mode-link');
-        const authError = document.getElementById('auth-error');
-        const messageOverlay = document.getElementById('message-overlay');
-        const messageText = document.getElementById('message-text');
-        const messageBtn = document.getElementById('message-btn');
-        const usernameDisplay = document.getElementById('username-display');
-        const lulaCoinDisplay = document.getElementById('lula-coin-display');
-        const minerStatsDisplay = document.getElementById('miner-stats-display');
-        const progressBar = document.getElementById('progress-bar');
-        const mineBtn = document.getElementById('mine-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const shopBtn = document.getElementById('shop-btn');
-        const minerSelectionBar = document.getElementById('miner-selection-bar');
-        const minerList = document.getElementById('miner-list');
-        const cancelPlacementBtn = document.getElementById('cancel-placement-btn');
-        const notificationOverlay = document.getElementById('notification-overlay');
-        const notificationText = document.getElementById('notification-text');
-
-        // Chaves para localStorage
-        const AUTH_TOKEN_KEY = 'authToken';
-        const LAST_MINED_TIME_KEY = 'lastMinedTime';
-
-        // Variáveis de estado
-        let currentAuthMode = 'login'; // 'login' ou 'register'
-        let currentMinerPrice = 0; // Preço do minerador atualmente selecionado na loja
-
-        // === Funções de Utilitário ===
-        function showAuthScreen() {
-            authScreen.classList.remove('hidden');
-            gameContainer.classList.add('hidden');
-            minerSelectionBar.classList.add('hidden'); // Esconde a barra de mineradores se estiver visível
-            clearAuthError();
-        }
-
-        function hideAuthScreen() {
-            authScreen.classList.add('hidden');
-            gameContainer.classList.remove('hidden');
-        }
-
-        function displayAuthError(message) {
-            authError.textContent = message;
-            authError.classList.remove('hidden');
-        }
-
-        function clearAuthError() {
-            authError.textContent = '';
-            authError.classList.add('hidden');
-        }
-
-        function showMessage(message, callback) {
-            messageText.textContent = message;
-            messageOverlay.classList.remove('hidden');
-            messageBtn.onclick = () => {
-                messageOverlay.classList.add('hidden');
-                if (callback) callback();
-            };
-        }
-
-        function showNotification(message) {
-            notificationText.textContent = message;
-            notificationOverlay.classList.remove('hidden');
-            setTimeout(() => {
-                notificationOverlay.classList.add('hidden');
-            }, 3000); // Notificação some após 3 segundos
-        }
-
-        // === Funções de Autenticação e API ===
-
-        async function registerUser(username, password) {
-            try {
-                const response = await fetch(`${BASE_URL}/api/auth/register`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username, password })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    showMessage('Registro bem-sucedido! Faça login agora.', () => {
-                        authModeLink.click(); // Alterna para tela de login
-                        authUsernameInput.value = username; // Preenche o username
-                        authPasswordInput.value = ''; // Limpa a senha
-                    });
-                } else {
-                    displayAuthError(data.message || 'Erro no registro.');
-                }
-            } catch (error) {
-                console.error('Erro de rede ou servidor ao registrar:', error);
-                displayAuthError('Erro de conexão ao servidor. Tente novamente.');
-            }
-        }
-
-        async function loginUser(username, password) {
-            try {
-                const response = await fetch(`${BASE_URL}/api/auth/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username, password })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    localStorage.setItem(AUTH_TOKEN_KEY, data.token);
-                    showMessage('Login bem-sucedido! Bem-vindo(a) ao jogo.', loadGameData);
-                } else {
-                    displayAuthError(data.message || 'Credenciais inválidas.');
-                }
-            } catch (error) {
-                console.error('Erro de rede ou servidor ao logar:', error);
-                displayAuthError('Erro de conexão ao servidor. Tente novamente.');
-            }
-        }
-
-        async function loadGameData() {
-            const token = localStorage.getItem(AUTH_TOKEN_KEY);
-            if (!token) {
-                showAuthScreen();
-                return;
-            }
-
-            try {
-                const response = await fetch(`${BASE_URL}/api/game/data`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    usernameDisplay.textContent = data.username;
-                    lulaCoinDisplay.textContent = parseFloat(data.lulaCoin).toFixed(2);
-                    updateMinerStats(data.miners);
-                    hideAuthScreen();
-                    // Iniciar o loop de mineração ou outras lógicas de jogo
-                    // Por exemplo: verificar se deve minerar automaticamente
-                } else {
-                    showMessage(data.message || 'Sessão expirada. Faça login novamente.', showAuthScreen);
-                }
-            } catch (error) {
-                console.error('Erro de rede ou servidor ao carregar dados do jogo:', error);
-                showMessage('Erro de conexão ao servidor. Tente novamente.', showAuthScreen);
-            }
-        }
-
-        async function mineLulaCoin() {
-            const token = localStorage.getItem(AUTH_TOKEN_KEY);
-            if (!token) {
-                showMessage('Você precisa estar logado para minerar!', showAuthScreen);
-                return;
-            }
-
-            // Lógica para evitar spam de cliques e calcular tempo de mineração
-            const lastMinedTime = parseInt(localStorage.getItem(LAST_MINED_TIME_KEY) || '0');
-            const cooldown = 2000; // Cooldown de 2 segundos para mineração manual (ajuste conforme necessário)
-            const now = Date.now();
-
-            if (now - lastMinedTime < cooldown) {
-                showNotification('Aguarde um pouco antes de minerar novamente!');
-                return;
-            }
-
-            try {
-                mineBtn.disabled = true; // Desabilita o botão para evitar cliques múltiplos
-                progressBar.style.width = '0%'; // Reinicia a barra
-                progressBar.classList.remove('hidden');
-
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 10; // Avança 10% a cada 200ms
-                    progressBar.style.width = `${progress}%`;
-                    if (progress >= 100) {
-                        clearInterval(interval);
-                        progressBar.classList.add('hidden');
-                    }
-                }, 200); // 10 iterações * 200ms = 2 segundos
-
-                const response = await fetch(`${BASE_URL}/api/game/mine`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    lulaCoinDisplay.textContent = parseFloat(data.lulaCoin).toFixed(2);
-                    showNotification(`+${parseFloat(data.minedAmount).toFixed(2)} LulaCoin!`);
-                    localStorage.setItem(LAST_MINED_TIME_KEY, now.toString()); // Salva o tempo da última mineração
-                } else {
-                    showMessage(data.message || 'Erro ao minerar. Tente novamente.', loadGameData);
-                }
-            } catch (error) {
-                console.error('Erro de rede ou servidor ao minerar:', error);
-                showMessage('Erro de conexão ao servidor ao minerar. Tente novamente.', loadGameData);
-            } finally {
-                mineBtn.disabled = false; // Reabilita o botão
-            }
-        }
-
-        async function buyMiner(minerId) {
-            const token = localStorage.getItem(AUTH_TOKEN_KEY);
-            if (!token) {
-                showMessage('Você precisa estar logado para comprar mineradores!', showAuthScreen);
-                return;
-            }
-
-            try {
-                const response = await fetch(`${BASE_URL}/api/game/buy-miner`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ minerId })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    lulaCoinDisplay.textContent = parseFloat(data.lulaCoin).toFixed(2);
-                    updateMinerStats(data.miners);
-                    showNotification(data.message || 'Minerador comprado com sucesso!');
-                    hideMinerSelectionBar();
-                } else {
-                    showMessage(data.message || 'Erro ao comprar minerador. Verifique seus LulaCoins.', loadGameData);
-                }
-            } catch (error) {
-                console.error('Erro de rede ou servidor ao comprar minerador:', error);
-                showMessage('Erro de conexão ao servidor ao comprar minerador. Tente novamente.', loadGameData);
-            }
-        }
-
-        // Funções de UI da Loja
-        function showMinerSelectionBar() {
-            minerSelectionBar.classList.remove('hidden');
-            minerList.innerHTML = ''; // Limpa a lista antes de adicionar
-
-            // Mineradores disponíveis (simulados para o frontend)
-            const miners = [
-                { id: 'basic', name: 'Minerador Básico', price: 100, lpm: 0.1 },
-                { id: 'pro', name: 'Minerador Pro', price: 500, lpm: 0.5 },
-                { id: 'quantum', name: 'Minerador Quântico', price: 2000, lpm: 2.0 }
-            ];
-
-            miners.forEach(miner => {
-                const minerItem = document.createElement('div');
-                minerItem.classList.add('miner-item');
-                minerItem.innerHTML = `
-                    <h3>${miner.name}</h3>
-                    <p>Preço: ${miner.price} LulaCoin</p>
-                    <p>Geração/min: ${miner.lpm} LulaCoin</p>
-                    <button class="buy-miner-btn" data-miner-id="${miner.id}">Comprar</button>
-                `;
-                minerList.appendChild(minerItem);
-            });
-
-            // Adiciona event listeners aos novos botões de compra
-            document.querySelectorAll('.buy-miner-btn').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const minerId = event.target.dataset.minerId;
-                    buyMiner(minerId);
-                });
-            });
-        }
-
-        function hideMinerSelectionBar() {
-            minerSelectionBar.classList.add('hidden');
-        }
-
-        function updateMinerStats(miners) {
-            minerStatsDisplay.innerHTML = ''; // Limpa estatísticas antigas
-            if (miners && miners.length > 0) {
-                miners.forEach(miner => {
-                    const statItem = document.createElement('p');
-                    statItem.innerHTML = `<strong>${miner.name}:</strong> ${miner.count}x (Gera: ${miner.lpm * miner.count} LulaCoin/min)`;
-                    minerStatsDisplay.appendChild(statItem);
-                });
-            } else {
-                minerStatsDisplay.textContent = 'Nenhum minerador ainda. Compre um na loja!';
-            }
-        }
-
-        // === Inicialização do Jogo ===
-        document.addEventListener('DOMContentLoaded', () => {
-            loadGameData(); // Tenta carregar os dados do jogo ao iniciar
+      try {
+        const res = await fetch('https://lula-coin-backend.onrender.com/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
         });
 
-        // Event Listeners da Autenticação
-        authModeLink.addEventListener('click', (event) => {
-            event.preventDefault(); // Evita que o link mude a URL da página
-            if (currentAuthMode === 'login') {
-                authTitle.textContent = 'Registrar';
-                authSubmitBtn.textContent = 'Registrar';
-                authModeText.textContent = 'Já tem uma conta?';
-                authModeLink.textContent = 'Entre aqui';
-                currentAuthMode = 'register';
-            } else {
-                authTitle.textContent = 'Login';
-                authSubmitBtn.textContent = 'Entrar';
-                authModeText.textContent = 'Não tem uma conta?';
-                authModeLink.textContent = 'Registre-se aqui';
-                currentAuthMode = 'login';
-            }
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem('token', data.token);
+          alert("Registrado com sucesso!");
+        } else {
+          document.getElementById('erro').innerText = data.message || "Erro no registro";
+        }
+      } catch (err) {
+        document.getElementById('erro').innerText = "Erro de conexão com o servidor.";
+      }
+    }
+
+    async function login() {
+      const username = document.getElementById('email').value;
+      const password = document.getElementById('senha').value;
+
+      try {
+        const res = await fetch('https://lula-coin-backend.onrender.com/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
         });
 
-        authSubmitBtn.addEventListener('click', () => {
-            const username = authUsernameInput.value.trim();
-            const password = authPasswordInput.value.trim();
-
-            if (!username || !password) {
-                displayAuthError('Por favor, preencha todos os campos.');
-                return;
-            }
-
-            if (currentAuthMode === 'login') {
-                loginUser(username, password);
-            } else {
-                registerUser(username, password);
-            }
-        });
-
-        authUsernameInput.addEventListener('input', clearAuthError);
-        authPasswordInput.addEventListener('input', clearAuthError);
-
-        // Event Listeners do Jogo
-        logoutBtn.addEventListener('click', () => {
-            localStorage.removeItem(AUTH_TOKEN_KEY);
-            showMessage('Você foi desconectado.', showAuthScreen);
-        });
-
-        mineBtn.addEventListener('click', mineLulaCoin);
-
-        shopBtn.addEventListener('click', () => {
-            showMinerSelectionBar();
-        });
-
-        cancelPlacementBtn.addEventListener('click', () => {
-            hideMinerSelectionBar();
-        });
-
-    </script>
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem('token', data.token);
+          alert("Login realizado!");
+        } else {
+          document.getElementById('erro').innerText = data.message || "Erro no login";
+        }
+      } catch (err) {
+        document.getElementById('erro').innerText = "Erro de conexão com o servidor.";
+      }
+    }
+  </script>
 </body>
 </html>
